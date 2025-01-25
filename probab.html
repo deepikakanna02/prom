@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gender-Based Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #e9f7ef;
+            border: 1px solid #d4edda;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gender-Based Matching Game</h1>
+        <form id="matchingForm">
+            <label for="gender">Enter your gender:</label>
+            <select id="gender" name="gender" required>
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+            <br><br>
+            <label for="answers">Enter your answers (comma-separated, e.g., a,b,c,d,a):</label>
+            <input type="text" id="answers" name="answers" required>
+            <br><br>
+            <button type="submit">Submit</button>
+        </form>
+
+        <div class="results" id="results" style="display: none;">
+            <h2>Matching Results</h2>
+            <ul id="resultsList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const users = [];
+        document.getElementById('matchingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const gender = document.getElementById('gender').value;
+            const answers = document.getElementById('answers').value.split(',');
+
+            if (answers.length !== 5) {
+                alert('Please provide exactly 5 answers.');
+                return;
+            }
+
+            users.push({ gender, answers });
+
+            matchUsers();
+            document.getElementById('matchingForm').reset();
+        });
+
+        function matchUsers() {
+            const males = users.filter(user => user.gender === 'male');
+            const females = users.filter(user => user.gender === 'female');
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+
+            if (males.length === 0 || females.length === 0) {
+                alert('Not enough participants for matching.');
+                return;
+            }
+
+            const pairs = [];
+            while (males.length > 0 && females.length > 0) {
+                let bestMatch = null;
+                let bestScore = -1;
+
+                const male = males.pop();
+                females.forEach((female, index) => {
+                    const score = male.answers.reduce((acc, ans, i) => acc + (ans === female.answers[i] ? 1 : 0), 0);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = { male, female, score, femaleIndex: index };
+                    }
+                });
+
+                if (bestMatch) {
+                    females.splice(bestMatch.femaleIndex, 1);
+                    pairs.push(bestMatch);
+                }
+            }
+
+            pairs.forEach(({ male, female, score }) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `Male (${male.answers.join(',')}) matched with Female (${female.answers.join(',')}) with ${score}/5 compatibility.`;
+                resultsList.appendChild(listItem);
+            });
+
+            if (males.length > 0 || females.length > 0) {
+                const unmatched = [...males, ...females];
+                unmatched.forEach(user => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${user.gender === 'male' ? 'Male' : 'Female'} (${user.answers.join(',')}) could not be matched.`;
+                    resultsList.appendChild(listItem);
+                });
+            }
+
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
